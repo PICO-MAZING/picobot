@@ -20,15 +20,18 @@ find_package(std_msgs REQUIRED)
 add_executable(picobot_keyboard src/picobot_keyboard.cpp)
 add_executable(picobot_controller src/picobot_controller.cpp)
 add_executable(picobot_listener src/picobot_listener.cpp)
+add_executable(picobot_line_follower src/picobot_line_follower.cpp)
 
 ament_target_dependencies(picobot_keyboard rclcpp std_msgs)
 ament_target_dependencies(picobot_controller rclcpp std_msgs)
 ament_target_dependencies(picobot_listener rclcpp std_msgs)
+ament_target_dependencies(picobot_line_follower rclcpp std_msgs)
 
 install(TARGETS
   picobot_keyboard
   picobot_controller
   picobot_listener
+  picobot_line_follower
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

@@ -31,6 +31,7 @@ typedef struct sensor
 } sensor;
 
 bool running = true;
+bool tourner = false;
 
 void quit(int signal)
 {
@@ -38,17 +39,17 @@ void quit(int signal)
   running = false;
 }
 
-class PicobotController : public rclcpp::Node
+class PicobotLineFollower : public rclcpp::Node
 {
 public:
-  PicobotController()
-      : Node("picobot_controller"), count_(0)
+  PicobotLineFollower()
+      : Node("picobot_line_follower"), count_(0)
   {
     sensors_sub = this->create_subscription<std_msgs::msg::Int8>("picobot/sensors", rclcpp::SensorDataQoS(),
-                                                                 std::bind(&PicobotController::sensors_callback, this, _1));
+                                                                 std::bind(&PicobotLineFollower::sensors_callback, this, _1));
     publisher_ = this->create_publisher<std_msgs::msg::Int8>("picobot/cmd_vel", rclcpp::SensorDataQoS());
     timer_ = this->create_wall_timer(
-        500ms, std::bind(&PicobotController::timer_callback, this));
+        500ms, std::bind(&PicobotLineFollower::timer_callback, this));
   }
 
 private:
@@ -59,53 +60,47 @@ private:
     ground.middle = bool(data[1]);
     ground.left = bool(data[2]);
 
-    wall.right = !bool(data[3]);
-    wall.middle = !bool(data[4]);
-    wall.left = !bool(data[5]);
-
-    RCLCPP_INFO(this->get_logger(), "WALL: %d %d %d --- GROUND %d %d %d", wall.left, wall.middle, wall.right, ground.left, ground.middle, ground.right);
+    RCLCPP_INFO(this->get_logger(), "GROUND: %d %d %d", ground.left, ground.middle, ground.right);
   }
 
   void timer_callback()
   {
     // RCLCPP_INFO(this->get_logger(), "Publishing: '%d'", message.data);
-    if (true && running) // case courante != arrivée
+    if (true && running && !tourner) // case courante != arrivée
     {
+
       if (ground.left && ground.middle && ground.right)
       {
         picobot_state = STOP;
+        tourner = true;
         message.data = picobot_state;
         publisher_->publish(message);
       }
-      else
+      else if (!ground.left && ground.middle && !ground.right)
       {
-        if (!wall.right)
-        {
-          picobot_state = RIGHT;
-          message.data = picobot_state;
-          publisher_->publish(message);
-        }
-        else if (!wall.middle)
-        {
-          picobot_state = FORWARD;
-          message.data = picobot_state;
-          publisher_->publish(message);
-          // sleep(2);
-        }
-        else if (!wall.left)
-        {
-          picobot_state = LEFT;
-          message.data = picobot_state;
-          publisher_->publish(message);
-          // sleep(2);
-        }
-        else
-        {
-          picobot_state = FORWARD;
-          message.data = picobot_state;
-          publisher_->publish(message);
-        }
+        picobot_state = FORWARD;
+        message.data = picobot_state;
+        publisher_->publish(message);
       }
+      else if (!ground.left && !ground.middle && ground.right)
+      {
+        picobot_state = RIGHT;
+        message.data = picobot_state;
+        publisher_->publish(message);
+      }
+      else if (ground.left && !ground.middle && !ground.right)
+      {
+        picobot_state = LEFT;
+        message.data = picobot_state;
+        publisher_->publish(message);
+      }
+    }
+    else if (true && tourner)
+    {
+      tourner = false;
+      picobot_state = RIGHT;
+      message.data = picobot_state;
+      publisher_->publish(message);
     }
     else
     {
@@ -129,7 +124,7 @@ int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
   signal(SIGINT, quit);
-  rclcpp::spin(std::make_shared<PicobotController>());
+  rclcpp::spin(std::make_shared<PicobotLineFollower>());
   rclcpp::shutdown();
   return 0;
 }
