@@ -76,7 +76,6 @@ private:
         picobot_state = STOP;
         message.data = picobot_state;
         publisher_->publish(message);
-        // sleep(2);
       }
       else
       {
