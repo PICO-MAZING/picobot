@@ -20,7 +20,9 @@ typedef enum state
   FORWARD,
   RIGHT,
   BACKWARD,
-  LEFT
+  LEFT,
+  DUCK_LEFT,
+  DUCK_RIGHT
 } state;
 
 typedef struct sensor
@@ -66,41 +68,50 @@ private:
   void timer_callback()
   {
     // RCLCPP_INFO(this->get_logger(), "Publishing: '%d'", message.data);
-    if (true && running && !tourner) // case courante != arrivée
+    if (true && running) // case courante != arrivée
     {
-
-      if (ground.left && ground.middle && ground.right)
+      if (tourner) // TODO: remplacer par un switch; elargir pour gauche et droite
       {
-        picobot_state = STOP;
-        tourner = true;
-        message.data = picobot_state;
-        publisher_->publish(message);
+        if ((!ground.left && !ground.middle && ground.right)    // 0 0 1
+            || (!ground.left && ground.middle && ground.right)) // 0 1 1
+        {
+          tourner = false;
+        }
+        else
+        {
+          picobot_state = DUCK_RIGHT;
+          message.data = picobot_state;
+          publisher_->publish(message);
+        }
       }
-      else if (!ground.left && ground.middle && !ground.right)
+      else if (!tourner)
       {
-        picobot_state = FORWARD;
-        message.data = picobot_state;
-        publisher_->publish(message);
+        if (ground.left && ground.middle && ground.right)
+        {
+          picobot_state = STOP;
+          tourner = true;
+          message.data = picobot_state;
+          publisher_->publish(message);
+        }
+        else if (!ground.left && ground.middle && !ground.right)
+        {
+          picobot_state = FORWARD;
+          message.data = picobot_state;
+          publisher_->publish(message);
+        }
+        else if (!ground.left && !ground.middle && ground.right)
+        {
+          picobot_state = RIGHT;
+          message.data = picobot_state;
+          publisher_->publish(message);
+        }
+        else if (ground.left && !ground.middle && !ground.right)
+        {
+          picobot_state = LEFT;
+          message.data = picobot_state;
+          publisher_->publish(message);
+        }
       }
-      else if (!ground.left && !ground.middle && ground.right)
-      {
-        picobot_state = RIGHT;
-        message.data = picobot_state;
-        publisher_->publish(message);
-      }
-      else if (ground.left && !ground.middle && !ground.right)
-      {
-        picobot_state = LEFT;
-        message.data = picobot_state;
-        publisher_->publish(message);
-      }
-    }
-    else if (true && tourner)
-    {
-      tourner = false;
-      picobot_state = RIGHT;
-      message.data = picobot_state;
-      publisher_->publish(message);
     }
     else
     {

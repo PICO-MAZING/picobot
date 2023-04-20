@@ -17,6 +17,8 @@ static constexpr char KEYCODE_UP = 0x41;
 static constexpr char KEYCODE_DOWN = 0x42;
 static constexpr char KEYCODE_SPACE = 0x20;
 static constexpr char KEYCODE_Q = 0x71;
+static constexpr char KEYCODE_W = 0x77;
+static constexpr char KEYCODE_X = 0x78;
 
 bool running = true;
 
@@ -85,6 +87,7 @@ public:
         puts("Reading from keyboard");
         puts("---------------------------");
         puts("Use arrow keys to move the picobot.");
+        puts("Press W/X keys for duck left/right movement.");
         puts("'Q' to quit.");
 
         while (running)
@@ -109,7 +112,6 @@ public:
                 RCLCPP_DEBUG(nh_->get_logger(), "STOP");
                 movement = 0;
                 break;
-
             case KEYCODE_UP:
                 RCLCPP_DEBUG(nh_->get_logger(), "FORWARD");
                 movement = 1;
@@ -126,13 +128,20 @@ public:
                 RCLCPP_DEBUG(nh_->get_logger(), "LEFT");
                 movement = 4;
                 break;
+            case KEYCODE_W:
+                RCLCPP_DEBUG(nh_->get_logger(), "DUCK LEFT");
+                movement = 5;
+                break;
+            case KEYCODE_X:
+                RCLCPP_DEBUG(nh_->get_logger(), "DUCK RIGHT");
+                movement = 6;
+                break;
             case KEYCODE_Q:
-                RCLCPP_DEBUG(nh_->get_logger(), "quit");
+                RCLCPP_DEBUG(nh_->get_logger(), "QUIT");
                 running = false;
                 movement = 0;
                 break;
             default:
-
                 RCLCPP_DEBUG(nh_->get_logger(), std::to_string((int)c).c_str());
                 // This can happen if the read returned when there was no data, or
                 // another key was pressed.  In these cases, just silently ignore the

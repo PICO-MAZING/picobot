@@ -20,7 +20,9 @@ typedef enum state
   FORWARD,
   RIGHT,
   BACKWARD,
-  LEFT
+  LEFT,
+  DUCK_LEFT,
+  DUCK_RIGHT
 } state;
 
 typedef struct sensor

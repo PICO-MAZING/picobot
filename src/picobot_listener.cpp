@@ -16,7 +16,9 @@ typedef enum state
   FORWARD,
   RIGHT,
   BACKWARD,
-  LEFT
+  LEFT,
+  DUCK_LEFT,
+  DUCK_RIGHT
 } state;
 
 typedef struct sensor
@@ -72,11 +74,16 @@ private:
     case LEFT:
       command = "LEFT";
       break;
-
+    case DUCK_LEFT:
+      command = "DUCK LEFT";
+      break;
+    case DUCK_RIGHT:
+      command = "DUCK RIGHT";
+      break;
     default:
       break;
     }
-    RCLCPP_INFO(this->get_logger(), "COMMAND : %d --> %s", msg.data, command.c_str());
+    //RCLCPP_INFO(this->get_logger(), "COMMAND : %d --> %s", msg.data, command.c_str());
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -85,7 +92,7 @@ private:
   size_t count_;
   sensor wall, ground;
   state picobot_state;
-  //std_msgs::msg::Int8 message;
+  // std_msgs::msg::Int8 message;
 };
 
 int main(int argc, char *argv[])
