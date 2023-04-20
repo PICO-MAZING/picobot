@@ -86,26 +86,28 @@ private:
       }
       else if (!tourner)
       {
-        if (ground.left && ground.middle && ground.right)
+        if (ground.left && ground.middle && ground.right) // 1 1 1
         {
           picobot_state = STOP;
           tourner = true;
           message.data = picobot_state;
           publisher_->publish(message);
         }
-        else if (!ground.left && ground.middle && !ground.right)
+        else if (!ground.left && ground.middle && !ground.right) // 0 1 0
         {
           picobot_state = FORWARD;
           message.data = picobot_state;
           publisher_->publish(message);
         }
-        else if (!ground.left && !ground.middle && ground.right)
+        else if ((!ground.left && !ground.middle && ground.right)    // 0 0 1
+                 || (!ground.left && ground.middle && ground.right)) // 0 1 1
         {
           picobot_state = RIGHT;
           message.data = picobot_state;
           publisher_->publish(message);
         }
-        else if (ground.left && !ground.middle && !ground.right)
+        else if ((ground.left && !ground.middle && !ground.right)    // 1 0 0
+                 || (ground.left && ground.middle && !ground.right)) // 1 1 0
         {
           picobot_state = LEFT;
           message.data = picobot_state;
