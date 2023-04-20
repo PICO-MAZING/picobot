@@ -14,7 +14,7 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-typedef enum state
+typedef enum
 {
   STOP,
   FORWARD,
@@ -23,9 +23,18 @@ typedef enum state
   LEFT,
   DUCK_LEFT,
   DUCK_RIGHT
+} action;
+
+typedef enum
+{
+  PARK,
+  FOLLOW_LINE,
+  TURN_RIGHT,
+  TURN_LEFT,
+  REACH_CENTER
 } state;
 
-typedef struct sensor
+typedef struct
 {
   bool left;
   bool middle;
@@ -62,63 +71,117 @@ private:
     ground.middle = bool(data[1]);
     ground.left = bool(data[2]);
 
-    RCLCPP_INFO(this->get_logger(), "GROUND: %d %d %d", ground.left, ground.middle, ground.right);
+    wall.right = !bool(data[3]);
+    wall.middle = !bool(data[4]);
+    wall.left = !bool(data[5]);
+
+    // RCLCPP_INFO(this->get_logger(), "GROUND: %d %d %d", ground.left, ground.middle, ground.right);
   }
 
   void timer_callback()
   {
-    // RCLCPP_INFO(this->get_logger(), "Publishing: '%d'", message.data);
+    RCLCPP_INFO(this->get_logger(), "STATE: %s --- WALL: %d %d %d --- GROUND: %d %d %d", picobot_state_string[picobot_state].c_str(), wall.left, wall.middle, wall.right, ground.left, ground.middle, ground.right);
     if (true && running) // case courante != arrivée
     {
-      if (tourner) // TODO: remplacer par un switch; elargir pour gauche et droite
+      switch (picobot_state)
       {
-        if ((!ground.left && !ground.middle && ground.right)    // 0 0 1
-            || (!ground.left && ground.middle && ground.right)) // 0 1 1
+      case PARK:
+        if (!wall.right)
         {
-          tourner = false;
+          picobot_state = TURN_RIGHT;
+        }
+        else if (!wall.middle)
+        {
+          picobot_state = FOLLOW_LINE;
+        }
+        else if (!wall.left)
+        {
+          picobot_state = TURN_LEFT;
         }
         else
         {
-          picobot_state = DUCK_RIGHT;
-          message.data = picobot_state;
-          publisher_->publish(message);
+          picobot_state = TURN_RIGHT;
         }
-      }
-      else if (!tourner)
-      {
+
+        break;
+      case FOLLOW_LINE:
         if (ground.left && ground.middle && ground.right) // 1 1 1
         {
-          picobot_state = STOP;
-          tourner = true;
-          message.data = picobot_state;
+          picobot_action = STOP;
+          picobot_state = PARK;
+          message.data = picobot_action;
           publisher_->publish(message);
         }
         else if (!ground.left && ground.middle && !ground.right) // 0 1 0
         {
-          picobot_state = FORWARD;
-          message.data = picobot_state;
+          picobot_action = FORWARD;
+          message.data = picobot_action;
           publisher_->publish(message);
         }
         else if ((!ground.left && !ground.middle && ground.right)    // 0 0 1
                  || (!ground.left && ground.middle && ground.right)) // 0 1 1
         {
-          picobot_state = RIGHT;
-          message.data = picobot_state;
+          picobot_action = RIGHT;
+          message.data = picobot_action;
           publisher_->publish(message);
         }
         else if ((ground.left && !ground.middle && !ground.right)    // 1 0 0
                  || (ground.left && ground.middle && !ground.right)) // 1 1 0
         {
-          picobot_state = LEFT;
-          message.data = picobot_state;
+          picobot_action = LEFT;
+          message.data = picobot_action;
           publisher_->publish(message);
         }
+        break;
+      case TURN_LEFT:
+        if ((ground.left && !ground.middle && !ground.right)    // 1 0 0
+            || (ground.left && ground.middle && !ground.right)) // 1 1 0
+        {
+          picobot_state = REACH_CENTER;
+        }
+        else
+        {
+          picobot_action = DUCK_LEFT;
+          message.data = picobot_action;
+          publisher_->publish(message);
+        }
+        break;
+      case TURN_RIGHT:
+        if ((!ground.left && !ground.middle && ground.right)    // 0 0 1
+            || (!ground.left && ground.middle && ground.right)) // 0 1 1
+        {
+          picobot_state = REACH_CENTER;
+        }
+        else
+        {
+          picobot_action = DUCK_RIGHT;
+          message.data = picobot_action;
+          publisher_->publish(message);
+        }
+        break;
+
+      case REACH_CENTER:
+        if ((!ground.left && ground.middle && !ground.right)) // 0 1 0
+        {
+          picobot_action = STOP;
+          picobot_state = FOLLOW_LINE;
+          message.data = picobot_action;
+          publisher_->publish(message);
+        }
+        else
+        {
+          publisher_->publish(message);
+        }
+        break;
+
+      default:
+        break;
       }
     }
     else
     {
-      picobot_state = STOP;
-      message.data = picobot_state;
+      picobot_action = STOP;
+      message.data = picobot_action;
       publisher_->publish(message);
       rclcpp::shutdown();
     }
@@ -129,8 +192,10 @@ private:
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr sensors_sub;
   size_t count_;
   sensor wall, ground;
-  state picobot_state = STOP;
+  action picobot_action = STOP;
+  state picobot_state = PARK;
   std_msgs::msg::Int8 message;
+  std::string picobot_state_string[5] = {"PARK", "FOLLOW_LINE", "TURN_RIGHT", "TURN_LEFT", "REACH_CENTER"};
 };
 
 int main(int argc, char *argv[])

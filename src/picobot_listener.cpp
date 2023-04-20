@@ -10,7 +10,7 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-typedef enum state
+typedef enum
 {
   STOP,
   FORWARD,
@@ -19,9 +19,9 @@ typedef enum state
   LEFT,
   DUCK_LEFT,
   DUCK_RIGHT
-} state;
+} action;
 
-typedef struct sensor
+typedef struct
 {
   bool left;
   bool middle;
@@ -83,7 +83,7 @@ private:
     default:
       break;
     }
-    //RCLCPP_INFO(this->get_logger(), "COMMAND : %d --> %s", msg.data, command.c_str());
+    RCLCPP_INFO(this->get_logger(), "COMMAND : %d --> %s", msg.data, command.c_str());
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -91,8 +91,6 @@ private:
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr sensors_sub;
   size_t count_;
   sensor wall, ground;
-  state picobot_state;
-  // std_msgs::msg::Int8 message;
 };
 
 int main(int argc, char *argv[])

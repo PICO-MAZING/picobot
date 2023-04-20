@@ -14,7 +14,7 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-typedef enum state
+typedef enum
 {
   STOP,
   FORWARD,
@@ -23,9 +23,9 @@ typedef enum state
   LEFT,
   DUCK_LEFT,
   DUCK_RIGHT
-} state;
+} action;
 
-typedef struct sensor
+typedef struct
 {
   bool left;
   bool middle;
@@ -75,8 +75,8 @@ private:
     {
       if (ground.left && ground.middle && ground.right)
       {
-        picobot_state = STOP;
-        message.data = picobot_state;
+        picobot_action = STOP;
+        message.data = picobot_action;
         publisher_->publish(message);
         // sleep(2);
       }
@@ -84,36 +84,36 @@ private:
       {
         if (!wall.right)
         {
-          picobot_state = RIGHT;
-          message.data = picobot_state;
+          picobot_action = RIGHT;
+          message.data = picobot_action;
           publisher_->publish(message);
         }
         else if (!wall.middle)
         {
-          picobot_state = FORWARD;
-          message.data = picobot_state;
+          picobot_action = FORWARD;
+          message.data = picobot_action;
           publisher_->publish(message);
           // sleep(2);
         }
         else if (!wall.left)
         {
-          picobot_state = LEFT;
-          message.data = picobot_state;
+          picobot_action = LEFT;
+          message.data = picobot_action;
           publisher_->publish(message);
           // sleep(2);
         }
         else
         {
-          picobot_state = FORWARD;
-          message.data = picobot_state;
+          picobot_action = FORWARD;
+          message.data = picobot_action;
           publisher_->publish(message);
         }
       }
     }
     else
     {
-      picobot_state = STOP;
-      message.data = picobot_state;
+      picobot_action = STOP;
+      message.data = picobot_action;
       publisher_->publish(message);
       rclcpp::shutdown();
     }
@@ -124,7 +124,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr sensors_sub;
   size_t count_;
   sensor wall, ground;
-  state picobot_state = STOP;
+  action picobot_action = STOP;
   std_msgs::msg::Int8 message;
 };
 
